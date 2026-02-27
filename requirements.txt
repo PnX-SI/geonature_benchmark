@@ -1,1 +1,4 @@
 locust
+pandas
+numpy
+matplotlib

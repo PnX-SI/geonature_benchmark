@@ -15,6 +15,7 @@ Pour cibler un groupe de tests uniquement (ex: synthese) :
 import os
 import logging
 from locust import HttpUser, task, between, tag
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,6 +23,15 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Données de benchmark (issues de benchmark_data.py)
 # ---------------------------------------------------------------------------
+
+VERSION = "2.17.0"
+
+COM = "Gap"
+DEP = "Hautes-Alpes"
+REG = None
+
+
+N_ITEM_SYNTHESE = 10000
 
 BBOX_POLYGON = {
     "modif_since_validation": False,
@@ -200,7 +210,7 @@ class GeoNatureUser(HttpUser):
 
     # Credentials par défaut, surchargés via variables d'environnement
     login = os.getenv("GEONATURE_LOGIN", "admin")
-    password = os.getenv("GEONATURE_PASSWORD", "password")
+    password = os.getenv("GEONATURE_PASSWORD", "admin")
 
     def on_start(self):
         """Récupère le token JWT au démarrage de chaque utilisateur simulé."""
@@ -216,6 +226,10 @@ class GeoNatureUser(HttpUser):
                 logger.info(f"Auth OK — utilisateur : {self.login}")
             else:
                 resp.failure(f"Échec auth ({resp.status_code})")
+        self.ids_synthese = self.fetch_ids_synthese(N_ITEM_SYNTHESE)
+        self.id_area_com = self.fetch_one_area("COM", COM)
+        self.id_area_dep = self.fetch_one_area("DEP", DEP)
+        self.id_area_reg = self.fetch_one_area("REG", REG) if REG else None
 
     def _headers(self):
         return {"Authorization": f"Bearer {self.token}"}
@@ -228,18 +242,48 @@ class GeoNatureUser(HttpUser):
             url, headers=self._headers(), name=name or url, **kwargs
         )
 
+    def fetch_ids_synthese(self, n):
+        """
+        helper called from tests; use plain requests so that
+        the HTTP call is **not** recorded by Locust’s client.
+        """
+        url = self.host.rstrip("/") + SYNTHESE_OBS_URL + f"?limit={n}"
+        resp = requests.get(url, headers=self._headers())
+        resp.raise_for_status()
+        return [
+            feature.get("id_synthese") for feature in resp.json().get("features", [])
+        ]
+
+    def fetch_one_area(self, type_area="COM", area_name=None):
+        url = (
+            self.host.rstrip("/")
+            + f"/geo/areas?without_geom=true&type_code={type_area}"
+        )
+        if area_name:
+            url += f"&area_name={area_name}"
+        resp = requests.get(url, headers=self._headers())
+        resp.raise_for_status()
+        areas = resp.json()
+        return areas[0].get("id_area") if areas else None
+
 
 # ---------------------------------------------------------------------------
-# Home — Statistiques générales
+# Synthèse
 # ---------------------------------------------------------------------------
 
+SYNTHESE_OBS_URL = "/synthese/for_web"
+SYNTHESE_EXPORT_URL = "/synthese/export_observations"
+SYNTHESE_EXPORT_STATUS_URL = "/synthese/export_statuts"
+SYNTHESE_EXPORT_TAXON_URL = "/synthese/export_taxons"
 
-class TestBenchmarkHome(GeoNatureUser):
+
+class TestBenchmarkAll(GeoNatureUser):
     """
-    Équivalent de TestBenchmarkHome (pytest-benchmark)
-    - test_general_stats       → profil user
-    - test_general_stats_admin → profil admin
+    Classe consolidée contenant toutes les tâches de benchmark
+    Les tâches sont organisées par groupe avec des tags pour distinction.
     """
+
+    # -- Home — Statistiques générales --
 
     @tag("home")
     @task
@@ -251,18 +295,7 @@ class TestBenchmarkHome(GeoNatureUser):
     def test_general_stats_admin(self):
         self.get("/synthese/general_stats", name="[home] general_stats (admin)")
 
-
-# ---------------------------------------------------------------------------
-# Métadonnées — gn_meta
-# ---------------------------------------------------------------------------
-
-
-class TestBenchmarkGnMeta(GeoNatureUser):
-    """
-    Équivalent de TestBenchmarkGnMeta (pytest-benchmark)
-    - test_list_acquisition_frameworks
-    - test_list_datasets
-    """
+    # -- Métadonnées — gn_meta --
 
     @tag("gn_meta")
     @task
@@ -277,37 +310,7 @@ class TestBenchmarkGnMeta(GeoNatureUser):
     def test_list_datasets(self):
         self.get("/meta/datasets", name="[gn_meta] list_datasets")
 
-
-# ---------------------------------------------------------------------------
-# Synthèse
-# ---------------------------------------------------------------------------
-
-SYNTHESE_OBS_URL = "/synthese/for_web"
-SYNTHESE_EXPORT_URL = "/synthese/export_observations"
-SYNTHESE_EXPORT_STATUS_URL = "/synthese/export_statuts"
-SYNTHESE_EXPORT_TAXON_URL = "/synthese/export_taxons"
-
-
-class TestBenchmarkSynthese(GeoNatureUser):
-    """
-    Équivalent de TestBenchmarkSynthese (pytest-benchmark)
-
-    Filtres géographiques / taxonomiques :
-      - test_with_geometry_bbox
-      - test_with_geometry_complex_poly
-      - test_with_commune  (→ remplacé par un area_COM statique à adapter)
-      - test_with_departement
-      - test_with_region
-      - test_with_up_tree_taxon
-      - test_benchmark_synthese_regulation
-
-    Exports par volume :
-      - 1 000 / 10 000 / 100 000 observations
-      - export status
-      - export taxons
-    """
-
-    # -- Nomenclature --------------------------------------------------------
+    # -- Synthèse — Nomenclature --
 
     @tag("synthese", "nomenclature")
     @task(1)
@@ -317,7 +320,7 @@ class TestBenchmarkSynthese(GeoNatureUser):
             name="[synthese] get_default_nomenclatures",
         )
 
-    # -- Filtres géométriques ------------------------------------------------
+    # -- Synthèse — Filtres géométriques --
 
     @tag("synthese", "geometry")
     @task(3)
@@ -333,9 +336,7 @@ class TestBenchmarkSynthese(GeoNatureUser):
             name="[synthese] obs complex polygon",
         )
 
-    # -- Filtres par aire administrative -------------------------------------
-    # Les id_area ci-dessous sont des exemples ; remplace-les par les vrais ids
-    # de ta base (équivalent des requêtes SQLAlchemy dans benchmark_data.py).
+    # -- Synthèse — Filtres par aire administrative --
 
     @tag("synthese", "area", "commune")
     @task(2)
@@ -344,7 +345,7 @@ class TestBenchmarkSynthese(GeoNatureUser):
             SYNTHESE_OBS_URL,
             json={
                 "modif_since_validation": False,
-                "area_COM": [int(os.getenv("BENCHMARK_ID_COM", "1"))],
+                "area_COM": [self.id_area_com],
             },
             name="[synthese] obs commune",
         )
@@ -356,24 +357,26 @@ class TestBenchmarkSynthese(GeoNatureUser):
             SYNTHESE_OBS_URL,
             json={
                 "modif_since_validation": False,
-                "area_DEP": [int(os.getenv("BENCHMARK_ID_DEP", "1"))],
+                "area_DEP": [self.id_area_dep],
             },
             name="[synthese] obs departement",
         )
 
-    @tag("synthese", "area", "region")
-    @task(2)
-    def test_with_region(self):
-        self.post(
-            SYNTHESE_OBS_URL,
-            json={
-                "modif_since_validation": False,
-                "area_REG": [int(os.getenv("BENCHMARK_ID_REG", "1"))],
-            },
-            name="[synthese] obs region",
-        )
+    if REG:
 
-    # -- Filtres taxonomiques ------------------------------------------------
+        @tag("synthese", "area", "region")
+        @task(2)
+        def test_with_region(self):
+            self.post(
+                SYNTHESE_OBS_URL,
+                json={
+                    "modif_since_validation": False,
+                    "area_REG": [self.id_area_reg],
+                },
+                name="[synthese] obs region",
+            )
+
+    # -- Synthèse — Filtres taxonomiques --
 
     @tag("synthese", "taxon")
     @task(2)
@@ -389,152 +392,45 @@ class TestBenchmarkSynthese(GeoNatureUser):
             SYNTHESE_OBS_URL, json=REGULATION_FILTER, name="[synthese] obs regulation"
         )
 
-    # -- Exports par volume --------------------------------------------------
+    # -- Synthèse — Exports par volume --
 
     @tag("synthese", "export")
     @task(1)
     def test_export_observations_1000(self):
+        # export_observations?export_format=csv&view_name=gn_synthese.v_synthese_for_export
         self.post(
-            SYNTHESE_EXPORT_URL,
-            json={"limit": 1_000},
+            SYNTHESE_EXPORT_URL
+            + "?export_format=csv&view_name=gn_synthese.v_synthese_for_export",
             name="[synthese] export obs 1 000",
-        )
-
-    @tag("synthese", "export")
-    @task(1)
-    def test_export_observations_10000(self):
-        self.post(
-            SYNTHESE_EXPORT_URL,
-            json={"limit": 10_000},
-            name="[synthese] export obs 10 000",
-        )
-
-    @tag("synthese", "export")
-    @task(1)
-    def test_export_observations_100000(self):
-        self.post(
-            SYNTHESE_EXPORT_URL,
-            json={"limit": 100_000},
-            name="[synthese] export obs 100 000",
+            json=self.ids_synthese[:1000],
         )
 
     @tag("synthese", "export")
     @task(1)
     def test_export_status(self):
-        self.post(SYNTHESE_EXPORT_STATUS_URL, json={}, name="[synthese] export status")
+        self.post(
+            SYNTHESE_EXPORT_STATUS_URL,
+            json={"id_synthese": self.ids_synthese[:N_ITEM_SYNTHESE]},
+            name="[synthese] export status",
+        )
 
     @tag("synthese", "export")
     @task(1)
     def test_export_taxons(self):
-        self.post(SYNTHESE_EXPORT_TAXON_URL, json={}, name="[synthese] export taxons")
+        self.post(
+            SYNTHESE_EXPORT_TAXON_URL,
+            json=self.ids_synthese[:N_ITEM_SYNTHESE],
+            name="[synthese] export taxons",
+        )
 
-
-# ---------------------------------------------------------------------------
-# OccHab
-# ---------------------------------------------------------------------------
-
-
-# class TestBenchmarkOcchab(GeoNatureUser):
-#     """
-#     Équivalent de TestBenchmarkOcchab (pytest-benchmark)
-#     - test_get_station
-#     - test_list_stations (admin)
-#     - test_list_stations_restricted → voir TestBenchmarkOcchabRestricted
-#     - test_export_all_habitats_{csv,geojson,shapefile}
-#     """
-
-#     @tag("occhab")
-#     @task(1)
-#     def test_get_station(self):
-#         self.get("/occhab/stations/8/", name="[occhab] get_station (id=8)")
-
-#     @tag("occhab")
-#     @task(2)
-#     def test_list_stations(self):
-#         self.get("/occhab/stations/", name="[occhab] list_stations (admin)")
-
-#     @tag("occhab", "export")
-#     @task(1)
-#     def test_export_habitats_csv(self):
-#         self.post(
-#             "/occhab/export_stations/csv",
-#             name="[occhab] export csv",
-#         )
-
-#     @tag("occhab", "export")
-#     @task(1)
-#     def test_export_habitats_geojson(self):
-#         self.post(
-#             "/occhab/export_stations/geojson",
-#             name="[occhab] export geojson",
-#         )
-
-#     @tag("occhab", "export")
-#     @task(1)
-#     def test_export_habitats_shapefile(self):
-#         self.post(
-#             "/occhab/export_stations/shapefile",
-#             name="[occhab] export shapefile",
-#         )
-
-
-# class TestBenchmarkOcchabRestricted(GeoNatureUser):
-#     """Équivalent de test_list_stations_restricted — utilisateur avec droits restreints."""
-
-#     login = os.getenv("GEONATURE_RESTRICTED_LOGIN", "user_restricted_occhab")
-#     password = os.getenv(
-#         "GEONATURE_RESTRICTED_PASSWORD", os.getenv("GEONATURE_PASSWORD", "password")
-#     )
-
-#     @tag("occhab", "restricted")
-#     @task
-#     def test_list_stations_restricted(self):
-#         self.get("/occhab/stations/", name="[occhab] list_stations (restricted)")
-
-
-# ---------------------------------------------------------------------------
-# OccTax
-# ---------------------------------------------------------------------------
-
-
-class TestBenchmarkOcctax(GeoNatureUser):
-    """
-    Équivalent de TestBenchmarkOcctax (pytest-benchmark)
-    - test_list_releves_unrestricted (admin)
-    - test_list_releves_restricted   → voir TestBenchmarkOcctaxRestricted
-    """
+    # -- OccTax --
 
     @tag("occtax")
     @task
     def test_list_releves_unrestricted(self):
         self.get("/occtax/releves", name="[occtax] list_releves (admin)")
 
-
-class TestBenchmarkOcctaxRestricted(GeoNatureUser):
-    """Équivalent de test_list_releves_restricted — utilisateur avec droits restreints."""
-
-    login = os.getenv("GEONATURE_RESTRICTED_LOGIN", "user_restricted_occhab")
-    password = os.getenv(
-        "GEONATURE_RESTRICTED_PASSWORD", os.getenv("GEONATURE_PASSWORD", "password")
-    )
-
-    @tag("occtax", "restricted")
-    @task
-    def test_list_releves_restricted(self):
-        self.get("/occtax/releves", name="[occtax] list_releves (restricted)")
-
-
-# ---------------------------------------------------------------------------
-# Ref Geo
-# ---------------------------------------------------------------------------
-
-
-class TestBenchmarkRefGeo(GeoNatureUser):
-    """
-    Équivalent de TestBenchmarkRefGeo (pytest-benchmark)
-    - test_get_areas_with_geom
-    - test_get_areas_without_geom
-    """
+    # -- Ref Geo --
 
     @tag("ref_geo")
     @task
@@ -552,14 +448,40 @@ class TestBenchmarkRefGeo(GeoNatureUser):
             name="[ref_geo] get_areas without_geom",
         )
 
+    # -- Validation --
+    if VERSION > "2.16.4":
 
-class MonUtilisateur(GeoNatureUser):
+        @tag("validation")
+        @task
+        def test_get_validated_obs(self):
+            self.post(
+                "/validation/observations",
+                name="[validation] last obs to be validated (limit 1000)",
+                json={"limit": 1000},
+            )
 
-    @tag("validation")
-    @task
-    def test_get_validated_obs(self):
-        self.get("/validation/observations")
+        @tag("validation")
+        @task
+        def test_get_last_validation(self):
+            self.get(
+                "/validation?page=1&per_page=10&sort=desc&order_by=validation_date&format=json&no_auto=true",
+                name="[validation] last_validation widget",
+            )
 
-    @tag("validation")
-    def test_get_last_validation(self):
-        self.get("/validation/", json={"page": 1, "per_page": 20})
+    else:
+
+        @tag("validation")
+        @task
+        def test_get_validated_obs(self):
+            self.get(
+                "/validation?limit=1000",
+                name="[validation] last obs to be validated (limit 1000)",
+            )
+
+        @tag("validation")
+        @task
+        def test_get_last_validation(self):
+            self.get(
+                "/validation?page=1&per_page=10&sort=desc&order_by=last_validation.validation_date&format=json",
+                name="[validation] last_validation widget",
+            )
