@@ -2,3 +2,6 @@ locust
 pandas
 numpy
 matplotlib
+lxml
+pykeepass
+questionary

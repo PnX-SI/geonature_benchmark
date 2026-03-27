@@ -1,198 +1,79 @@
 """
 Locust benchmark pour GeoNature
-Conversion des tests pytest-benchmark vers Locust
 
 Usage:
-    locust -f test.py --host=http://127.0.0.1:8000
-
-Avec variables d'environnement :
-    GEONATURE_LOGIN=admin GEONATURE_PASSWORD=secret locust -f test.py --host=http://127.0.0.1:8000
-
-Pour cibler un groupe de tests uniquement (ex: synthese) :
-    locust -f test.py --host=http://127.0.0.1:8000 --tags synthese
+    locust -f test.py --host=http://127.0.0.1:8000 --kdbx ./credentials.kdbx
+    locust -f test.py --host=http://127.0.0.1:8000 --username admin --password secret
 """
 
 import os
 import logging
-from locust import HttpUser, task, between, tag
 import requests
+import getpass
+
+from locust import HttpUser, task, between, tag, events
+from pykeepass import PyKeePass
+
+from src.fixture import *
+from src.user_factory import UserFactory, User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Données de benchmark (issues de benchmark_data.py)
-# ---------------------------------------------------------------------------
-
 VERSION = "2.17.0"
-
-COM = "Gap"
-DEP = "Hautes-Alpes"
-REG = None
+factory: UserFactory = None
 
 
-N_ITEM_SYNTHESE = 10000
+# ---------------------------------------------------------------------------
+# Arguments custom injectés dans le parser Locust
+# ---------------------------------------------------------------------------
 
-BBOX_POLYGON = {
-    "modif_since_validation": False,
-    "geoIntersection": {
-        "type": "Feature",
-        "properties": {},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [5.828785, 44.632571],
-                    [5.828785, 45.06773],
-                    [6.625493, 45.06773],
-                    [6.625493, 44.632571],
-                    [5.828785, 44.632571],
-                ]
-            ],
-        },
-    },
-}
 
-COMPLEX_POLYGON = {
-    "modif_since_validation": False,
-    "geoIntersection": {
-        "type": "Feature",
-        "properties": {},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [6.063715, 44.968659],
-                    [5.974429, 44.981293],
-                    [5.955198, 44.934631],
-                    [5.98256, 44.890826],
-                    [6.040252, 44.867462],
-                    [6.085582, 44.860646],
-                    [6.125418, 44.884012],
-                    [6.141901, 44.876225],
-                    [6.135038, 44.837262],
-                    [6.099322, 44.820697],
-                    [6.064979, 44.804128],
-                    [6.070473, 44.750493],
-                    [6.133664, 44.731947],
-                    [6.176247, 44.756341],
-                    [6.189983, 44.777799],
-                    [6.19273, 44.731947],
-                    [6.261412, 44.737803],
-                    [6.273775, 44.760243],
-                    [6.319105, 44.741706],
-                    [6.279269, 44.688002],
-                    [6.231192, 44.656741],
-                    [6.483941, 44.672375],
-                    [6.396028, 44.628395],
-                    [6.486688, 44.596121],
-                    [6.538887, 44.655764],
-                    [6.533392, 44.688981],
-                    [6.500425, 44.73877],
-                    [6.533392, 44.748528],
-                    [6.514161, 44.790467],
-                    [6.41938, 44.812887],
-                    [6.488062, 44.854779],
-                    [6.536139, 44.856727],
-                    [6.597938, 44.894757],
-                    [6.518262, 44.934648],
-                    [6.437214, 44.932702],
-                    [6.391881, 44.883076],
-                    [6.356164, 44.86068],
-                    [6.251768, 44.874311],
-                    [6.284735, 44.921996],
-                    [6.317703, 44.952143],
-                    [6.385011, 44.964781],
-                    [6.364406, 44.972557],
-                    [6.449572, 44.976444],
-                    [6.479792, 44.984218],
-                    [6.468803, 45.027928],
-                    [6.413857, 45.043461],
-                    [6.336928, 45.055017],
-                    [6.194069, 45.048223],
-                    [6.170716, 44.952049],
-                    [6.161099, 44.949131],
-                    [6.063715, 44.968659],
-                ]
-            ],
-        },
-    },
-}
+@events.init_command_line_parser.add_listener
+def add_arguments(parser, **kwargs):
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--kdbx", type=str, default="", help="Chemin vers le fichier KeePass (.kdbx)"
+    )
+    parser.add_argument(
+        "--username",
+        type=str,
+        default="",
+        help="Nom d'utilisateur (alternative à --kdbx)",
+    )
+    parser.add_argument(
+        "--password", type=str, default="", help="Mot de passe (alternative à --kdbx)"
+    )
 
-REGULATION_FILTER = {
-    "modif_since_validation": False,
-    "regulations_protection_status": ["REGL"],
-}
 
-TREE_TAXON_FILTER = {
-    "modif_since_validation": False,
-    "cd_ref_parent": [
-        183787,
-        183767,
-        183839,
-        183840,
-        183843,
-        183874,
-        184358,
-        184357,
-        184355,
-        184354,
-        184353,
-        184367,
-        184376,
-        927956,
-        200726,
-        184350,
-        184351,
-        184366,
-        184363,
-        184362,
-        184360,
-        184359,
-        184377,
-        184379,
-        184374,
-        184371,
-        184369,
-        184368,
-        184381,
-        184393,
-        184391,
-        184390,
-        184385,
-        184387,
-        184388,
-        184378,
-        184438,
-        184449,
-        184450,
-        184493,
-        1007942,
-        184501,
-        184486,
-        184488,
-        184491,
-        184499,
-        184492,
-        184494,
-        200765,
-        184737,
-        184740,
-        184743,
-        184752,
-        184756,
-        184762,
-        184766,
-        184767,
-        184768,
-        184771,
-        184773,
-        184775,
-        184776,
-        184772,
-        184615,
-    ],
-}
+# ---------------------------------------------------------------------------
+# Initialisation de la factory au démarrage
+# ---------------------------------------------------------------------------
+
+
+@events.init.add_listener
+def on_locust_init(environment, **kwargs):
+    global factory
+    opts = environment.parsed_options
+
+    if opts.kdbx:
+        master_password = os.environ.get("KEEPASS_MASTER_PASSWORD") or getpass.getpass(
+            "🔑 Mot de passe KeePass : "
+        )
+        factory = UserFactory(
+            kdbx_path=opts.kdbx,
+            master_password=master_password,
+            group_name="Users",
+        )
+
+    elif opts.username and opts.password:
+        factory = UserFactory(
+            list_users=[User(username=opts.username, password=opts.password)]
+        )
+
+    else:
+        raise ValueError("Spécifie --kdbx ou --username + --password")
+
 
 # ---------------------------------------------------------------------------
 # Classe de base avec authentification
@@ -208,22 +89,19 @@ class GeoNatureUser(HttpUser):
     abstract = True
     wait_time = between(1, 3)
 
-    # Credentials par défaut, surchargés via variables d'environnement
-    login = os.getenv("GEONATURE_LOGIN", "admin")
-    password = os.getenv("GEONATURE_PASSWORD", "admin")
-
     def on_start(self):
         """Récupère le token JWT au démarrage de chaque utilisateur simulé."""
         self.token = None
+        user: User = factory.draw_user()
         with self.client.post(
             "/auth/login",
-            json={"login": self.login, "password": self.password},
+            json={"login": user.username, "password": user._password},
             name="/auth/login",
             catch_response=True,
         ) as resp:
             if resp.status_code == 200:
                 self.token = resp.json().get("token")
-                logger.info(f"Auth OK — utilisateur : {self.login}")
+                logger.info(f"Auth OK — utilisateur : {user.username}")
             else:
                 resp.failure(f"Échec auth ({resp.status_code})")
         self.ids_synthese = self.fetch_ids_synthese(N_ITEM_SYNTHESE)
