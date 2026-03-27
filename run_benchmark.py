@@ -1,80 +1,17 @@
-"""
-Locust benchmark pour GeoNature
-
-Usage:
-    locust -f test.py --host=http://127.0.0.1:8000 --kdbx ./credentials.kdbx
-    locust -f test.py --host=http://127.0.0.1:8000 --username admin --password secret
-"""
-
-import os
 import logging
-import requests
-import getpass
 
-from locust import HttpUser, task, between, tag, events
-from pykeepass import PyKeePass
+import requests
+from locust import HttpUser, between, tag, task
 
 from src.fixture import *
-from src.user_factory import UserFactory, User
+from src.user_factory import User
+import src.config as config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 VERSION = "2.17.0"
-factory: UserFactory = None
-
-
-# ---------------------------------------------------------------------------
-# Arguments custom injectés dans le parser Locust
-# ---------------------------------------------------------------------------
-
-
-@events.init_command_line_parser.add_listener
-def add_arguments(parser, **kwargs):
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--kdbx", type=str, default="", help="Chemin vers le fichier KeePass (.kdbx)"
-    )
-    parser.add_argument(
-        "--username",
-        type=str,
-        default="",
-        help="Nom d'utilisateur (alternative à --kdbx)",
-    )
-    parser.add_argument(
-        "--password", type=str, default="", help="Mot de passe (alternative à --kdbx)"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Initialisation de la factory au démarrage
-# ---------------------------------------------------------------------------
-
-
-@events.init.add_listener
-def on_locust_init(environment, **kwargs):
-    global factory
-    opts = environment.parsed_options
-
-    if opts.kdbx:
-        master_password = os.environ.get("KEEPASS_MASTER_PASSWORD") or getpass.getpass(
-            "🔑 Mot de passe KeePass : "
-        )
-        factory = UserFactory(
-            kdbx_path=opts.kdbx,
-            master_password=master_password,
-            group_name="Users",
-        )
-
-    elif opts.username and opts.password:
-        factory = UserFactory(
-            list_users=[User(username=opts.username, password=opts.password)]
-        )
-
-    else:
-        raise ValueError("Spécifie --kdbx ou --username + --password")
-
-
 # ---------------------------------------------------------------------------
 # Classe de base avec authentification
 # ---------------------------------------------------------------------------
@@ -92,7 +29,7 @@ class GeoNatureUser(HttpUser):
     def on_start(self):
         """Récupère le token JWT au démarrage de chaque utilisateur simulé."""
         self.token = None
-        user: User = factory.draw_user()
+        user: User = config.factory.draw_user()
         with self.client.post(
             "/auth/login",
             json={"login": user.username, "password": user._password},
