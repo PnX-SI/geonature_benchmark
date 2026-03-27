@@ -4,6 +4,7 @@ import requests
 from locust import HttpUser, between, tag, task
 
 from src.fixture import *
+from src.name_tasks import TASK_NAMES
 from src.user_factory import User
 import src.config as config
 
@@ -103,12 +104,7 @@ class TestBenchmarkAll(GeoNatureUser):
     @tag("home")
     @task
     def test_general_stats_user(self):
-        self.get("/synthese/general_stats", name="[home] general_stats (user)")
-
-    @tag("home", "admin")
-    @task
-    def test_general_stats_admin(self):
-        self.get("/synthese/general_stats", name="[home] general_stats (admin)")
+        self.get("/synthese/general_stats", name=TASK_NAMES["general_stats"])
 
     # -- Métadonnées — gn_meta --
 
@@ -117,13 +113,13 @@ class TestBenchmarkAll(GeoNatureUser):
     def test_list_acquisition_frameworks(self):
         self.get(
             "/meta/acquisition_frameworks",
-            name="[gn_meta] list_acquisition_frameworks",
+            name=TASK_NAMES["acq_frameworks"],
         )
 
     @tag("gn_meta")
     @task
     def test_list_datasets(self):
-        self.get("/meta/datasets", name="[gn_meta] list_datasets")
+        self.get("/meta/datasets", name=TASK_NAMES["datasets"])
 
     # -- Synthèse — Nomenclature --
 
@@ -131,8 +127,7 @@ class TestBenchmarkAll(GeoNatureUser):
     @task(1)
     def test_get_default_nomenclatures(self):
         self.get(
-            "/synthese/defaultsNomenclatures",
-            name="[synthese] get_default_nomenclatures",
+            "/synthese/defaultsNomenclatures", name=TASK_NAMES["default_nomenclatures"]
         )
 
     # -- Synthèse — Filtres géométriques --
@@ -140,7 +135,11 @@ class TestBenchmarkAll(GeoNatureUser):
     @tag("synthese", "geometry")
     @task(3)
     def test_with_geometry_bbox(self):
-        self.post(SYNTHESE_OBS_URL, json=BBOX_POLYGON, name="[synthese] obs bbox")
+        self.post(
+            SYNTHESE_OBS_URL,
+            json=BBOX_POLYGON,
+            name=TASK_NAMES["obs_bbox"],
+        )
 
     @tag("synthese", "geometry")
     @task(3)
@@ -148,7 +147,7 @@ class TestBenchmarkAll(GeoNatureUser):
         self.post(
             SYNTHESE_OBS_URL,
             json=COMPLEX_POLYGON,
-            name="[synthese] obs complex polygon",
+            name=TASK_NAMES["obs_complex_poly"],
         )
 
     # -- Synthèse — Filtres par aire administrative --
@@ -162,7 +161,7 @@ class TestBenchmarkAll(GeoNatureUser):
                 "modif_since_validation": False,
                 "area_COM": [self.id_area_com],
             },
-            name="[synthese] obs commune",
+            name=TASK_NAMES["obs_commune"],
         )
 
     @tag("synthese", "area", "departement")
@@ -174,7 +173,7 @@ class TestBenchmarkAll(GeoNatureUser):
                 "modif_since_validation": False,
                 "area_DEP": [self.id_area_dep],
             },
-            name="[synthese] obs departement",
+            name=TASK_NAMES["obs_dep"],
         )
 
     if REG:
@@ -188,7 +187,7 @@ class TestBenchmarkAll(GeoNatureUser):
                     "modif_since_validation": False,
                     "area_REG": [self.id_area_reg],
                 },
-                name="[synthese] obs region",
+                name=TASK_NAMES["obs_reg"],
             )
 
     # -- Synthèse — Filtres taxonomiques --
@@ -197,14 +196,14 @@ class TestBenchmarkAll(GeoNatureUser):
     @task(2)
     def test_with_up_tree_taxon(self):
         self.post(
-            SYNTHESE_OBS_URL, json=TREE_TAXON_FILTER, name="[synthese] obs tree taxon"
+            SYNTHESE_OBS_URL, json=TREE_TAXON_FILTER, name=TASK_NAMES["obs_tree_taxon"]
         )
 
     @tag("synthese", "regulation")
     @task(1)
     def test_synthese_regulation(self):
         self.post(
-            SYNTHESE_OBS_URL, json=REGULATION_FILTER, name="[synthese] obs regulation"
+            SYNTHESE_OBS_URL, json=REGULATION_FILTER, name=TASK_NAMES["obs_regulation"]
         )
 
     # -- Synthèse — Exports par volume --
@@ -216,8 +215,8 @@ class TestBenchmarkAll(GeoNatureUser):
         self.post(
             SYNTHESE_EXPORT_URL
             + "?export_format=csv&view_name=gn_synthese.v_synthese_for_export",
-            name="[synthese] export obs 1 000",
             json=self.ids_synthese[:1000],
+            name=TASK_NAMES["export_csv_1000"],
         )
 
     @tag("synthese", "export")
@@ -226,7 +225,7 @@ class TestBenchmarkAll(GeoNatureUser):
         self.post(
             SYNTHESE_EXPORT_STATUS_URL,
             json={"id_synthese": self.ids_synthese[:N_ITEM_SYNTHESE]},
-            name="[synthese] export status",
+            name=TASK_NAMES["export_status"],
         )
 
     @tag("synthese", "export")
@@ -235,15 +234,8 @@ class TestBenchmarkAll(GeoNatureUser):
         self.post(
             SYNTHESE_EXPORT_TAXON_URL,
             json=self.ids_synthese[:N_ITEM_SYNTHESE],
-            name="[synthese] export taxons",
+            name=TASK_NAMES["export_taxons"],
         )
-
-    # -- OccTax --
-
-    @tag("occtax")
-    @task
-    def test_list_releves_unrestricted(self):
-        self.get("/occtax/releves", name="[occtax] list_releves (admin)")
 
     # -- Ref Geo --
 
@@ -252,7 +244,7 @@ class TestBenchmarkAll(GeoNatureUser):
     def test_get_areas_with_geom(self):
         self.get(
             "/geo/areas?without_geom=false&type_code=REG&type_code=DEP&type_code=COM",
-            name="[ref_geo] get_areas with_geom",
+            name=TASK_NAMES["geo_areas_with_geom"],
         )
 
     @tag("ref_geo")
@@ -260,7 +252,7 @@ class TestBenchmarkAll(GeoNatureUser):
     def test_get_areas_without_geom(self):
         self.get(
             "/geo/areas?without_geom=true&type_code=REG&type_code=DEP&type_code=COM",
-            name="[ref_geo] get_areas without_geom",
+            name=TASK_NAMES["geo_areas_without_geom"],
         )
 
     # -- Validation --
@@ -271,8 +263,8 @@ class TestBenchmarkAll(GeoNatureUser):
         def test_get_validated_obs(self):
             self.post(
                 "/validation/observations",
-                name="[validation] last obs to be validated (limit 1000)",
                 json={"limit": 1000},
+                name=TASK_NAMES["validation_obs"],
             )
 
         @tag("validation")
@@ -280,7 +272,7 @@ class TestBenchmarkAll(GeoNatureUser):
         def test_get_last_validation(self):
             self.get(
                 "/validation?page=1&per_page=10&sort=desc&order_by=validation_date&format=json&no_auto=true",
-                name="[validation] last_validation widget",
+                name=TASK_NAMES["validation_last"],
             )
 
     else:
@@ -288,15 +280,12 @@ class TestBenchmarkAll(GeoNatureUser):
         @tag("validation")
         @task
         def test_get_validated_obs(self):
-            self.get(
-                "/validation?limit=1000",
-                name="[validation] last obs to be validated (limit 1000)",
-            )
+            self.get("/validation?limit=1000", name=TASK_NAMES["validation_obs"])
 
         @tag("validation")
         @task
         def test_get_last_validation(self):
             self.get(
                 "/validation?page=1&per_page=10&sort=desc&order_by=last_validation.validation_date&format=json",
-                name="[validation] last_validation widget",
+                name=TASK_NAMES["validation_last"],
             )
