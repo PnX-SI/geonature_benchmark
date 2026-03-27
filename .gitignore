@@ -210,3 +210,5 @@ __marimo__/
 results/
 *.kdbx
 *.kdb
+*.csv
+*.png
