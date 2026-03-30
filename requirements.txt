@@ -5,3 +5,5 @@ matplotlib
 lxml
 pykeepass
 questionary
+dash
+dash-bootstrap-components
