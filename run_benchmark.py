@@ -124,7 +124,7 @@ class TestBenchmarkAll(GeoNatureUser):
     # -- Synthèse — Nomenclature --
 
     @tag("synthese", "nomenclature")
-    @task(1)
+    @task
     def test_get_default_nomenclatures(self):
         self.get(
             "/synthese/defaultsNomenclatures", name=TASK_NAMES["default_nomenclatures"]
@@ -133,7 +133,7 @@ class TestBenchmarkAll(GeoNatureUser):
     # -- Synthèse — Filtres géométriques --
 
     @tag("synthese", "geometry")
-    @task(3)
+    @task
     def test_with_geometry_bbox(self):
         self.post(
             SYNTHESE_OBS_URL,
@@ -142,7 +142,7 @@ class TestBenchmarkAll(GeoNatureUser):
         )
 
     @tag("synthese", "geometry")
-    @task(3)
+    @task
     def test_with_geometry_complex_poly(self):
         self.post(
             SYNTHESE_OBS_URL,
@@ -153,7 +153,7 @@ class TestBenchmarkAll(GeoNatureUser):
     # -- Synthèse — Filtres par aire administrative --
 
     @tag("synthese", "area", "commune")
-    @task(2)
+    @task
     def test_with_commune(self):
         self.post(
             SYNTHESE_OBS_URL,
@@ -165,7 +165,7 @@ class TestBenchmarkAll(GeoNatureUser):
         )
 
     @tag("synthese", "area", "departement")
-    @task(2)
+    @task
     def test_with_departement(self):
         self.post(
             SYNTHESE_OBS_URL,
@@ -179,7 +179,7 @@ class TestBenchmarkAll(GeoNatureUser):
     if REG:
 
         @tag("synthese", "area", "region")
-        @task(2)
+        @task
         def test_with_region(self):
             self.post(
                 SYNTHESE_OBS_URL,
@@ -193,14 +193,14 @@ class TestBenchmarkAll(GeoNatureUser):
     # -- Synthèse — Filtres taxonomiques --
 
     @tag("synthese", "taxon")
-    @task(2)
+    @task
     def test_with_up_tree_taxon(self):
         self.post(
             SYNTHESE_OBS_URL, json=TREE_TAXON_FILTER, name=TASK_NAMES["obs_tree_taxon"]
         )
 
     @tag("synthese", "regulation")
-    @task(1)
+    @task
     def test_synthese_regulation(self):
         self.post(
             SYNTHESE_OBS_URL, json=REGULATION_FILTER, name=TASK_NAMES["obs_regulation"]
@@ -209,7 +209,7 @@ class TestBenchmarkAll(GeoNatureUser):
     # -- Synthèse — Exports par volume --
 
     @tag("synthese", "export")
-    @task(1)
+    @task
     def test_export_observations_1000(self):
         # export_observations?export_format=csv&view_name=gn_synthese.v_synthese_for_export
         self.post(
@@ -220,7 +220,7 @@ class TestBenchmarkAll(GeoNatureUser):
         )
 
     @tag("synthese", "export")
-    @task(1)
+    @task
     def test_export_status(self):
         self.post(
             SYNTHESE_EXPORT_STATUS_URL,
@@ -229,7 +229,7 @@ class TestBenchmarkAll(GeoNatureUser):
         )
 
     @tag("synthese", "export")
-    @task(1)
+    @task
     def test_export_taxons(self):
         self.post(
             SYNTHESE_EXPORT_TAXON_URL,
