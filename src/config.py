@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import getpass
 import os
+import warnings
 from typing import Optional
 
 from locust import events
@@ -19,6 +20,9 @@ class Config:
     username: str = ""
     password: str = ""
 
+    # SSL verification
+    verify_ssl: bool = True
+
     @classmethod
     def from_options(cls, opts) -> "Config":
         """Construit un Config depuis les options parsées par Locust."""
@@ -26,6 +30,7 @@ class Config:
             kdbx_path=opts.kdbx,
             username=opts.username,
             password=opts.password,
+            verify_ssl=opts.verify_ssl,
         )
 
     @property
@@ -61,13 +66,22 @@ def add_arguments(parser, **kwargs):
     parser.add_argument(
         "--password", type=str, default="", help="Mot de passe (alternative à --kdbx)"
     )
-
+    parser.add_argument(
+        "--no-verify-ssl",
+        action="store_false",
+        dest="verify_ssl",
+        default=True,
+        help="Désactiver la vérification du certificat SSL",
+    )
 
 @events.init.add_listener
 def on_locust_init(environment, **kwargs):
     global config, factory
     config = Config.from_options(environment.parsed_options)
     config.validate()
+
+    if not config.verify_ssl:
+        warnings.filterwarnings('ignore', message='Unverified HTTPS request')
 
     if config.use_kdbx:
         master_password = os.environ.get("KEEPASS_MASTER_PASSWORD") or getpass.getpass(

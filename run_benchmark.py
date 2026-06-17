@@ -27,6 +27,10 @@ class GeoNatureUser(HttpUser):
     abstract = True
     wait_time = between(1, 3)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.client.verify = config.config.verify_ssl
+
     def on_start(self):
         """Récupère le token JWT au démarrage de chaque utilisateur simulé."""
         self.token = None
@@ -64,7 +68,7 @@ class GeoNatureUser(HttpUser):
         the HTTP call is **not** recorded by Locust’s client.
         """
         url = self.host.rstrip("/") + SYNTHESE_OBS_URL + f"?limit={n}"
-        resp = requests.get(url, headers=self._headers())
+        resp = requests.get(url, headers=self._headers(), verify=self.client.verify)
         resp.raise_for_status()
         return [
             feature.get("id_synthese") for feature in resp.json().get("features", [])
@@ -77,7 +81,7 @@ class GeoNatureUser(HttpUser):
         )
         if area_name:
             url += f"&area_name={area_name}"
-        resp = requests.get(url, headers=self._headers())
+        resp = requests.get(url, headers=self._headers(), verify=self.client.verify)
         resp.raise_for_status()
         areas = resp.json()
         return areas[0].get("id_area") if areas else None
