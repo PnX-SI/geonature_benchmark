@@ -1,5 +1,6 @@
 import logging
 import locust
+import requests
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 from src.config import *
@@ -21,7 +22,6 @@ def on_test_start(environment, **kwargs):
                 if inspect.isclass(sub_obj) and issubclass(sub_obj, GeoNatureUser) and sub_obj is not GeoNatureUser:
                     if sub_obj.VERSION <= geonature_version:
                         for method_name, method_obj in inspect.getmembers(sub_obj):
-                            if inspect.isfunction(method_obj):
+                            if inspect.isfunction(method_obj) and hasattr(method_obj, "locust_task_weight"):
                                 logger.info(f"✅ Chargement de la tâche {method_name} pour GeoNature {geonature_version} : {sub_name}")
-                                # GeoNatureBenchmarkTasks, method_name, method_obj)
                                 GeoNatureBenchmarkTasks.tasks.append(method_obj)
