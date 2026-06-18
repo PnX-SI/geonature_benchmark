@@ -16,8 +16,7 @@ class GeoNatureBenchmarkTasks(GeoNatureUser):
 @locust.events.init.add_listener
 def on_test_start(environment, **kwargs):
     geonature_version = requests.get(f"{environment.host}/gn_commons/config").json().get("GEONATURE_VERSION")
-    for _, obj in inspect.getmembers(geonature_task_class):
-        if inspect.ismodule(obj):
+    for _, obj in inspect.getmembers(geonature_task_class, inspect.ismodule):
             for sub_name, sub_obj in inspect.getmembers(obj):
                 if inspect.isclass(sub_obj) and issubclass(sub_obj, GeoNatureUser) and sub_obj is not GeoNatureUser:
                     if sub_obj.VERSION <= geonature_version:
