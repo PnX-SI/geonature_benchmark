@@ -1,5 +1,3 @@
-
-
 import logging
 
 import requests
@@ -87,7 +85,6 @@ class GeoNatureUser(HttpUser):
         resp.raise_for_status()
         areas = resp.json()
         return areas[0].get("id_area") if areas else None
-
 
 
 # ---------------------------------------------------------------------------
