@@ -1,3 +1,5 @@
+
+
 import logging
 
 import requests
@@ -87,6 +89,7 @@ class GeoNatureUser(HttpUser):
         return areas[0].get("id_area") if areas else None
 
 
+
 # ---------------------------------------------------------------------------
 # Synthèse
 # ---------------------------------------------------------------------------
@@ -97,11 +100,12 @@ SYNTHESE_EXPORT_STATUS_URL = "/synthese/export_statuts"
 SYNTHESE_EXPORT_TAXON_URL = "/synthese/export_taxons"
 
 
-class TestBenchmarkAll(GeoNatureUser):
+class GeoNatureBenchmarkBase(GeoNatureUser):
     """
     Classe consolidée contenant toutes les tâches de benchmark
     Les tâches sont organisées par groupe avec des tags pour distinction.
     """
+    VERSION = "2.16.4"
 
     # -- Home — Statistiques générales --
 
@@ -260,36 +264,23 @@ class TestBenchmarkAll(GeoNatureUser):
         )
 
     # -- Validation --
-    if VERSION > "2.16.4":
+    
 
-        @tag("validation")
-        @task
-        def test_get_validated_obs(self):
-            self.post(
-                "/validation/observations",
-                json={"limit": 1000},
-                name=TASK_NAMES["validation_obs"],
-            )
+    @tag("validation")
+    @task
+    def test_get_validated_obs(self):
+        self.post(
+            "/validation/observations",
+            json={"limit": 1000},
+            name=TASK_NAMES["validation_obs"],
+        )
 
-        @tag("validation")
-        @task
-        def test_get_last_validation(self):
-            self.get(
-                "/validation?page=1&per_page=10&sort=desc&order_by=validation_date&format=json&no_auto=true",
-                name=TASK_NAMES["validation_last"],
-            )
+    @tag("validation")
+    @task
+    def test_get_last_validation(self):
+        self.get(
+            "/validation?page=1&per_page=10&sort=desc&order_by=validation_date&format=json&no_auto=true",
+            name=TASK_NAMES["validation_last"],
+        )
 
-    else:
-
-        @tag("validation")
-        @task
-        def test_get_validated_obs(self):
-            self.get("/validation?limit=1000", name=TASK_NAMES["validation_obs"])
-
-        @tag("validation")
-        @task
-        def test_get_last_validation(self):
-            self.get(
-                "/validation?page=1&per_page=10&sort=desc&order_by=last_validation.validation_date&format=json",
-                name=TASK_NAMES["validation_last"],
-            )
+        
