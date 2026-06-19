@@ -19,3 +19,12 @@ TASK_NAMES = {
     "validation_obs": "validation/observations?limit=1000 | Validation · 1 000 obs à valider",
     "validation_last": "validation?sort=validation_date:desc | Validation · Dernières validations",
 }
+
+# ---------------------------------------------------------------------------
+# Synthèse
+# ---------------------------------------------------------------------------
+
+SYNTHESE_OBS_URL = "/synthese/for_web"
+SYNTHESE_EXPORT_URL = "/synthese/export_observations"
+SYNTHESE_EXPORT_STATUS_URL = "/synthese/export_statuts"
+SYNTHESE_EXPORT_TAXON_URL = "/synthese/export_taxons"

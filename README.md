@@ -106,20 +106,23 @@ locust -f run_benchmark.py --host=http://127.0.0.1:8000 \
 
 The benchmark includes comprehensive tests for all major GeoNature modules:
 
-| Tag | Description |
-|-----|-------------|
-| `home` | General statistics tests |
-| `gn_meta` | Metadata (acquisition frameworks, datasets) |
-| `synthese` | All synthese module tests |
-| `synthese geometry` | Geometric filter tests |
-| `synthese area` | Administrative area filter tests (commune, departement, region) |
-| `synthese taxon` | Taxonomic filter tests |
-| `synthese regulation` | Regulation/protection status filter tests |
-| `synthese export` | Export functionality tests (CSV, Excel, etc.) |
-| `occtax` | OccTax module tests |
-| `ref_geo` | Geographic reference data tests |
-| `validation` | Validation module tests |
-| `restricted` | Tests with restricted user permissions |
+| Tag                   | Description                                                     |
+|-----------------------|-----------------------------------------------------------------|
+| `home`                | General statistics tests                                        |
+| `gn_meta`             | Metadata (acquisition frameworks, datasets)                     |
+| `synthese`            | All synthese module tests                                       |
+| `synthese geometry`   | Geometric filter tests                                          |
+| `synthese area`       | Administrative area filter tests (commune, departement, region) |
+| `synthese taxon`      | Taxonomic filter tests                                          |
+| `synthese regulation` | Regulation/protection status filter tests                       |
+| `synthese export`     | Export functionality tests (CSV, Excel, etc.)                   |
+| `occtax`              | OccTax module tests                                             |
+| `ref_geo`             | Geographic reference data tests                                 |
+| `validation`          | Validation module tests                                         |
+| `restricted`          | Tests with restricted user permissions                          |
+| `monitorings`         | Monitorings module test                                         |
+| `geonature`           | Launch only geonature benchmarks and no external modules        |
+
 
 ### Comparing Benchmark Results
 
@@ -181,10 +184,18 @@ Results are generated interactively through the Locust web interface or exported
 - **RPS (Requests Per Second)**: Current and average throughout the test
 - **Performance comparison**: Before/after performance across benchmark runs
 
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and suggestions.
+
+
+## How to add your own module tests
+
+If you want to add a module to your test, you need to create a new module under `gn_modules/`. You will need to import 
+this module into `gn_modules/__init__.py` and add a new test class that inherits from `GeoNatureUser`. Your new 
+methods must be decorated with `@task`. Your test class should declare what minimum version of 
+GeoNature is required by adding the attribute `VERSION = "0.0.0"`. 
+Add the code name of your module to the `__init__.py` file of your module with a global variable `MODULE_CODE = "module_code"`
 
 ## License
 

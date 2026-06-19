@@ -2,8 +2,7 @@ import logging
 
 from locust import  tag, task
 
-from src.fixture import *
-from src.name_tasks import TASK_NAMES
+from src.constants import TASK_NAMES
 from src.geonature.geonature_base import GeoNatureBenchmarkBase
 
 

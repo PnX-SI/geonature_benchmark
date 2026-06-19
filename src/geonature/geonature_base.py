@@ -1,7 +1,8 @@
 import logging
 
 from src.fixture import *
-from src.name_tasks import TASK_NAMES
+from src.constants import TASK_NAMES, SYNTHESE_EXPORT_STATUS_URL, SYNTHESE_EXPORT_TAXON_URL, SYNTHESE_OBS_URL, \
+    SYNTHESE_EXPORT_URL
 
 from locust import tag, task
 
@@ -10,53 +11,13 @@ from src.user import GeoNatureUser
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Synthèse
-# ---------------------------------------------------------------------------
-
-SYNTHESE_OBS_URL = "/synthese/for_web"
-SYNTHESE_EXPORT_URL = "/synthese/export_observations"
-SYNTHESE_EXPORT_STATUS_URL = "/synthese/export_statuts"
-SYNTHESE_EXPORT_TAXON_URL = "/synthese/export_taxons"
-
 
 class GeoNatureBenchmarkBase(GeoNatureUser):
     """
-    Classe consolidée contenant toutes les tâches de benchmark
+    Classe consolidée contenant toutes les tâches de benchmark geonature
     Les tâches sont organisées par groupe avec des tags pour distinction.
     """
     VERSION = "2.15.4"
-
-    def on_start(self, *args, **kwargs):
-        self.ids_synthese = self.fetch_ids_synthese(N_ITEM_SYNTHESE)
-        self.id_area_com = self.fetch_one_area("COM", COM)
-        self.id_area_dep = self.fetch_one_area("DEP", DEP)
-        self.id_area_reg = self.fetch_one_area("REG", REG) if REG else None
-        return super().on_start()
-
-    def fetch_ids_synthese(self, n):
-        """
-        helper called from tests; use plain requests so that
-        the HTTP call is **not** recorded by Locust’s client.
-        """
-        url = self.host.rstrip("/") + SYNTHESE_OBS_URL + f"?limit={n}"
-        resp = self.get(url, headers=self._headers())
-        resp.raise_for_status()
-        return [
-            feature.get("id_synthese") for feature in resp.json().get("features", [])
-        ]
-
-    def fetch_one_area(self, type_area="COM", area_name=None):
-        url = (
-            self.host.rstrip("/")
-            + f"/geo/areas?without_geom=true&type_code={type_area}"
-        )
-        if area_name:
-            url += f"&area_name={area_name}"
-        resp = self.get(url, headers=self._headers(), verify=self.client.verify)
-        resp.raise_for_status()
-        areas = resp.json()
-        return areas[0].get("id_area") if areas else None
 
     # -- Home — Statistiques générales --
 
