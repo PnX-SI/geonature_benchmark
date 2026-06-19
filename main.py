@@ -1,4 +1,5 @@
 import inspect
+from functools import partial
 
 from src.user import GeoNatureUser
 from locust import events
@@ -37,19 +38,19 @@ class GeoNatureBenchmarkTasks(GeoNatureUser):
         geonature_modules = cls.find_modules()
         logger.debug(f"Modules we will try to add to benchmark : {geonature_modules}")
         for name, module in geonature_modules:
-            if modules_dict.get(module.MODULE_CODE) is None:
+            if (module_infos := modules_dict.get(module.MODULE_CODE)) is None:
                 logger.warning(f"Tryied to launch benchmark for module {module.MODULE_CODE} but no version found for this module.")
                 continue
-            version = modules_dict.get(module.MODULE_CODE)["version"]
+            version = module_infos["version"]
             locust_class = cls.find_class_from_version(module, version)
             if not locust_class:
                 logger.error(f"No class supporting version {version} found for module {module}")
                 continue
             logger.debug(f"Best suited class found for module is {locust_class}")
-            cls.add_task(locust_class, additional_tag=name)
+            cls.add_task(locust_class, additional_tag=name, module_url=module_infos["module_url"])
 
     @classmethod
-    def add_task(cls, locust_class: type[GeoNatureUser], additional_tag=None):
+    def add_task(cls, locust_class: type[GeoNatureUser], additional_tag=None, module_url=str):
         """Extract @task decorated methods from a class and register them.
 
         Args:
@@ -67,8 +68,31 @@ class GeoNatureBenchmarkTasks(GeoNatureUser):
                     task.locust_tag_set = {additional_tag}
                 else:
                     task.locust_tag_set.add(additional_tag)
+        tasks = cls.parametrize_tasks(tasks, module_url)
         cls.tasks.extend(tasks)
         logger.debug(f"added following tasks to benchmark {tasks}")
+
+    @classmethod
+    def parametrize_tasks(cls, tasks, module_url):
+        """
+        This method is used to parametrize tasks with the module_url argument.
+
+        If one tasks has a module_url argument, we will create another function to replace this task. This new
+        function will be the same but without the parameter module_url that will be replaced by the module_url supplied
+        in parametrize_tasks.
+
+        For how the principe works, see `functools.partial` documentation or search the concept of currying.
+        """
+        new_tasks = []
+        for task in tasks:
+            if hasattr(task, 'module_url'):
+                new_task = partial(task, module_url=module_url)
+                new_task.locust_task_weight = getattr(task, "locust_task_weight")
+                new_task.locust_task_weight = getattr(task, "locust_tag_set")
+                new_tasks.append(new_task)
+            else:
+                new_tasks.append(task)
+        return new_tasks
 
     @classmethod
     def find_geonature_class(cls, version):
@@ -76,7 +100,7 @@ class GeoNatureBenchmarkTasks(GeoNatureUser):
 
     @classmethod
     def find_class_from_version(cls, module, version):
-        """Find the best-matching class for a given version of a moduke .
+        """Find the best-matching class for a given version of a module .
 
         Returns the highest version class that match the target version.
         Returns None if no suitable class is found.
