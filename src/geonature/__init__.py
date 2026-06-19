@@ -1,3 +1,3 @@
-from .geonature_base import *
-from .geonature217 import *
+from .geonature_base import GeoNatureBenchmarkBase,GeoNatureUser
+from .geonature217 import GeoNature2170
 

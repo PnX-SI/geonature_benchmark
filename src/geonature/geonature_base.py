@@ -1,18 +1,16 @@
 import logging
-
 import requests
-from locust import HttpUser, between, tag, task
 
 from src.fixture import *
 from src.name_tasks import TASK_NAMES
 from src.user_factory import User
 import src.config as config
 
+from locust import HttpUser, between, tag, task
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-VERSION = "2.17.0"
 # ---------------------------------------------------------------------------
 # Classe de base avec authentification
 # ---------------------------------------------------------------------------
@@ -102,7 +100,7 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
     Classe consolidée contenant toutes les tâches de benchmark
     Les tâches sont organisées par groupe avec des tags pour distinction.
     """
-    VERSION = "2.16.4"
+    VERSION = "2.15.4"
 
     # -- Home — Statistiques générales --
 
