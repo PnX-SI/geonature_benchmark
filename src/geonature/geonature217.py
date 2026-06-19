@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class PipistrellusKuhlii_0(GeoNatureBenchmarkBase):
+class GeoNature2170(GeoNatureBenchmarkBase):
     VERSION = "2.17.0"
     
     @tag("validation")
