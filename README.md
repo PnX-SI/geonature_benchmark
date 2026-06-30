@@ -8,7 +8,7 @@ Performance benchmarking tools for [GeoNature](https://github.com/PnX-SI/GeoNatu
 - A running GeoNature instance to benchmark
 - Access to GeoNature credentials (optional, for authenticated tests)
 
-## Installation
+## Setup
 
 ### 1. Clone the repository
 
@@ -17,26 +17,39 @@ git clone https://github.com/PnX-SI/geonature_benchmark.git
 cd geonature_benchmark
 ```
 
-### 2. Create a virtual environment
+### 2. Setting up the environment
+
+#### Using **uv** (recommended)
+
+```shell
+uv sync
+```
+
+#### Using pip 
 
 Create an isolated Python environment to manage dependencies:
 
 ```bash
 # Create the virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
+python3 -m venv .venv
+source .venv/bin/activate
 ```
-
-### 3. Install dependencies
 
 With the virtual environment activated, install the required packages:
 
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
 ## Usage
+
+
+> [!WARNING]
+> Don't forget to activate your virtual environment before running any benchmark commands !
+> 
+> ```bash
+> source .venv/bin/activate
+> ```
 
 ### Running benchmarks
 
@@ -193,18 +206,19 @@ Results are generated interactively through the Locust web interface or exported
 - **RPS (Requests Per Second)**: Current and average throughout the test
 - **Performance comparison**: Before/after performance across benchmark runs
 
-## Contributing
+## F.A.Q. 
 
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and suggestions.
-
-
-## How to add your own module tests
+### How to add your own module tests ?
 
 If you want to add a module to your test, you need to create a new module under `gn_modules/`. You will need to import 
 this module into `gn_modules/__init__.py` and add a new test class that inherits from `GeoNatureUser`. Your new 
 methods must be decorated with `@task`. Your test class should declare what minimum version of 
 GeoNature is required by adding the attribute `VERSION = "0.0.0"`. 
 Add the code name of your module to the `__init__.py` file of your module with a global variable `MODULE_CODE = "module_code"`
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and suggestions.
 
 ## License
 
