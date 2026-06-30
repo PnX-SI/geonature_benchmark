@@ -181,18 +181,14 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
     @tag("validation")
     @task
     def test_get_validated_obs(self):
-        self.post(
-            "/validation/observations",
-            json={"limit": 1000},
-            name=TASK_NAMES["validation_obs"],
-        )
+        self.get("/validation?limit=1000", name=TASK_NAMES["validation_obs"])
 
     @tag("validation")
     @task
     def test_get_last_validation(self):
         self.get(
-            "/validation?page=1&per_page=10&sort=desc&order_by=validation_date&format=json&no_auto=true",
-            name=TASK_NAMES["validation_last"],
+            "/validation?page=1&per_page=10&sort=desc&order_by=last_validation.validation_date&format=json",
+            name="YOLO",
         )
 
         
