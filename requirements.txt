@@ -1,9 +1,0 @@
-locust
-pandas
-numpy
-matplotlib
-lxml
-pykeepass
-questionary
-dash
-dash-bootstrap-components
