@@ -188,7 +188,7 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
     def test_get_last_validation(self):
         self.get(
             "/validation?page=1&per_page=10&sort=desc&order_by=last_validation.validation_date&format=json",
-            name="YOLO",
+            name=TASK_NAMES["validation_last"],
         )
 
         
