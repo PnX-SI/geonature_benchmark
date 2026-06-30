@@ -10,14 +10,14 @@ Performance benchmarking tools for [GeoNature](https://github.com/PnX-SI/GeoNatu
 
 ## Installation
 
-### 1. Clone the Repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/PnX-SI/geonature_benchmark.git
 cd geonature_benchmark
 ```
 
-### 2. Create a Virtual Environment
+### 2. Create a virtual environment
 
 Create an isolated Python environment to manage dependencies:
 
@@ -28,7 +28,7 @@ source venv/bin/activate
 
 ```
 
-### 3. Install Dependencies
+### 3. Install dependencies
 
 With the virtual environment activated, install the required packages:
 
@@ -38,14 +38,14 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Running Benchmarks
+### Running benchmarks
 
-#### 1. Basic Benchmark Run (with Web Interface)
+#### 1. Basic benchmark run (with Web Interface)
 
 Start a benchmark against a local GeoNature instance:
 
 ```bash
-GEONATURE_LOGIN=admin GEONATURE_PASSWORD=secret locust -f run_benchmark.py --host=http://127.0.0.1:8000
+locust -f main.py --host=http://127.0.0.1:8000 --username admin --password admin
 ```
 
 This will open the Locust web interface at `http://127.0.0.1:8089` where you can:
@@ -54,43 +54,42 @@ This will open the Locust web interface at `http://127.0.0.1:8089` where you can
 - Start/stop the load test
 - Monitor real-time statistics
 
-#### 2. Headless Benchmark Run (with CSV Export)
+#### 2. Headless benchmark run (with CSV Export)
 
 Run benchmark without web interface and export results to CSV:
 
 ```bash
 mkdir -p results/run1
-locust -f run_benchmark.py --host=http://127.0.0.1:8000 \
+locust -f  main.py --host=http://127.0.0.1:8000 --username admin --password admin \
        --csv=results/run1/stats --headless -u 10 -r 2 --run-time 5m
 ```
 
 With authentication:
 
 ```bash
-GEONATURE_LOGIN=admin GEONATURE_PASSWORD=secret \
-locust -f run_benchmark.py --host=http://127.0.0.1:8000 \
+locust -f  main.py --host=http://127.0.0.1:8000 --username admin --password admin \
        --csv=results/run1/stats --headless -u 10 -r 2 --run-time 5m
 ```
 
-#### 3. Running Specific Tests with Tags
+#### 3. Running specific tests with tags
 
 You can run only specific test categories using tags:
 
 ```bash
 # Only synthese tests
-locust -f run_benchmark.py --host=http://127.0.0.1:8000 \
+locust -f main.py --host=http://127.0.0.1:8000 --username admin --password admin \
        --csv=results/run1/stats --headless -u 10 -r 2 --run-time 5m --tags synthese
 
 # Only geometry-related synthese tests
-locust -f run_benchmark.py --host=http://127.0.0.1:8000 \
+locust -f main.py --host=http://127.0.0.1:8000 --username admin --password admin \
        --csv=results/run1/stats --headless -u 10 -r 2 --run-time 5m --tags synthese geometry
 
 # Multiple specific tags
-locust -f run_benchmark.py --host=http://127.0.0.1:8000 \
+locust -f main.py --host=http://127.0.0.1:8000 --username admin --password admin \
        --csv=results/run1/stats --headless -u 10 -r 2 --run-time 5m --tags synthese occtax
 ```
 
-#### Common Locust Options
+#### Common Locust options
 
 | Option | Description | Example |
 |--------|-------------|---------|
@@ -102,7 +101,17 @@ locust -f run_benchmark.py --host=http://127.0.0.1:8000 \
 | `--csv=path/stats` | Export CSV results | `--csv=results/run1/stats` |
 | `--host=URL` | GeoNature instance URL | `--host=http://127.0.0.1:8000` |
 
-#### Available Test Tags
+
+### Authentication options
+
+| Option | Description | Example |
+|--------|-------------|---------|
+| --username | GeoNature username | `--username admin` |
+| --password | GeoNature password | `--password secret` |
+| --no-verify-ssl | Disable SSL certificate verification (for self-signed certs) | `--no-verify-ssl` |
+| --kdbx | Path to KeePass database for credentials | `--kdbx /path/to/credentials.kdbx` |
+
+#### Available test tags
 
 The benchmark includes comprehensive tests for all major GeoNature modules:
 
@@ -124,11 +133,11 @@ The benchmark includes comprehensive tests for all major GeoNature modules:
 | `geonature`           | Launch only geonature benchmarks and no external modules        |
 
 
-### Comparing Benchmark Results
+### Comparing benchmark results
 
 After running multiple benchmarks, compare them using the `compare_benchmarks.py` script:
 
-#### Compare Two or More Runs
+#### Compare two or more runs
 
 ```bash
 python3 compare_benchmarks.py results/run1/stats.csv results/run2/stats.csv
@@ -155,7 +164,7 @@ The comparison script generates:
    - `task_comparison_detailed.csv` - Detailed statistics for all tasks
    - `task_comparison_pivot.csv` - Pivot table for Excel analysis
 
-#### Example Output
+#### Example output
 
 ```
 ==================================================
@@ -175,7 +184,7 @@ COMPARAISON PAR TÂCHE — TEMPS MOYEN (ms)
     📉 [synthese] obs regulation         : -8.2% (-14.70 ms)
 ```
 
-## Benchmark Results
+## Benchmark results
 
 Results are generated interactively through the Locust web interface or exported as HTML/CSV reports:
 
