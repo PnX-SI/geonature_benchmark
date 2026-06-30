@@ -1,7 +1,7 @@
 import os
 import random
-from typing import List
-from pykeepass import PyKeePass
+from typing import List, Optional, cast
+from pykeepass import PyKeePass, Group
 
 
 class User:
@@ -13,8 +13,8 @@ class User:
 class UserFactory:
     def __init__(
         self,
-        kdbx_path: str = None,
-        master_password: str = None,
+        kdbx_path: Optional[str] = None,
+        master_password: Optional[str] = None,
         group_name: str = "TestUsers",
         list_users: List[User] = [],
     ):
@@ -47,11 +47,12 @@ class UserFactory:
         """
         kp = PyKeePass(kdbx_path, password=master_password)
 
-        group = kp.find_groups(name=group_name, first=True)
+        group: Group = cast(Group, kp.find_groups(name=group_name, first=True))
         if group is None:
             raise ValueError(f"Groupe '{group_name}' introuvable dans la base KeePass")
 
         users = []
+
         for entry in group.entries:
             if entry.username and entry.password:
                 users.append(User(entry.username, entry.password))

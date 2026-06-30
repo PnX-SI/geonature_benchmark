@@ -206,6 +206,23 @@ Results are generated interactively through the Locust web interface or exported
 - **RPS (Requests Per Second)**: Current and average throughout the test
 - **Performance comparison**: Before/after performance across benchmark runs
 
+## Development
+
+After running `uv sync` to install the required dependencies, install the pre-commit hooks:
+
+```bash
+uv run pre-commit install
+uv run pre-commit install --hook-type commit-msg
+```
+
+The pre-commit hooks configured in this project will:
+- **uv-lock**: Ensure the `uv.lock` file is up to date
+- **ruff**: Lint and format Python code automatically
+- **mypy**: Check type hints and type correctness
+- **conventional-pre-commit**: Validate commit messages follow the conventional commits format
+
+If any hook modifies files, you'll need to stage the changes and commit again.
+
 ## F.A.Q. 
 
 ### How to add your own module tests ?
