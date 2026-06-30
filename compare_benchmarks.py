@@ -14,12 +14,9 @@ Note:
 """
 
 import os
-from posixpath import basename
 import sys
 import pandas as pd
-import numpy as np
-from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List
 
 # Importer matplotlib de manière optionnelle
 try:
@@ -46,7 +43,8 @@ def load_stats_file(filepath: str) -> pd.DataFrame:
 def extract_task_stats(df: pd.DataFrame, run_name: str) -> pd.DataFrame:
     """
     Extrait les stats par tâche (exclut les résumés globaux)
-    Retourne un DataFrame avec les colonnes: task_name, run_name, avg_time, min_time, max_time, median_time, requests, failures
+    Retourne un DataFrame avec les colonnes: task_name, run_name,
+    avg_time, min_time, max_time, median_time, requests, failures
     """
     # Nettoyage : supprimer les whitespaces dans les noms de colonnes
     df.columns = df.columns.str.strip()
@@ -82,9 +80,7 @@ def extract_task_stats(df: pd.DataFrame, run_name: str) -> pd.DataFrame:
     }
 
     # Renommer les colonnes disponibles
-    rename_dict = {
-        old: new for old, new in col_mapping.items() if old in df_tasks.columns
-    }
+    rename_dict = {old: new for old, new in col_mapping.items() if old in df_tasks.columns}
     df_tasks.rename(columns=rename_dict, inplace=True)
 
     # Ajouter la colonne run_name
@@ -127,9 +123,6 @@ def print_task_comparison(task_stats_list: List[pd.DataFrame]) -> None:
     # Fusionner tous les stats en un seul DataFrame
     all_stats = pd.concat(task_stats_list, ignore_index=True)
 
-    # Obtenir les tâches uniques
-    unique_tasks = sorted(all_stats["task_name"].unique())
-
     # Créer un pivot pour faciliter la comparaison
     pivot_avg = all_stats.pivot_table(
         values="avg_time", index="task_name", columns="run_name", aggfunc="first"
@@ -169,9 +162,7 @@ def print_slowest_tasks(task_stats_list: List[pd.DataFrame], top_n: int = 5) -> 
     all_stats = pd.concat(task_stats_list, ignore_index=True)
 
     # Grouper par tâche et calculer le temps moyen sur tous les lancements
-    avg_by_task = (
-        all_stats.groupby("task_name")["avg_time"].mean().sort_values(ascending=False)
-    )
+    avg_by_task = all_stats.groupby("task_name")["avg_time"].mean().sort_values(ascending=False)
 
     print("\n")
     for i, (task, avg_time) in enumerate(avg_by_task.head(top_n).items(), 1):
@@ -188,9 +179,7 @@ def print_fastest_tasks(task_stats_list: List[pd.DataFrame], top_n: int = 5) -> 
     all_stats = pd.concat(task_stats_list, ignore_index=True)
 
     # Grouper par tâche et calculer le temps moyen sur tous les lancements
-    avg_by_task = (
-        all_stats.groupby("task_name")["avg_time"].mean().sort_values(ascending=True)
-    )
+    avg_by_task = all_stats.groupby("task_name")["avg_time"].mean().sort_values(ascending=True)
 
     print("\n")
     for i, (task, avg_time) in enumerate(avg_by_task.head(top_n).items(), 1):
@@ -218,15 +207,13 @@ def generate_task_comparison_chart(task_stats_list: List[pd.DataFrame]) -> None:
 
     ax.set_xlabel("Temps moyen (ms)", fontsize=11, fontweight="bold")
     ax.set_ylabel("Tâche", fontsize=11, fontweight="bold")
-    ax.set_title(
-        "Comparaison des temps moyens par tâche", fontsize=13, fontweight="bold"
-    )
+    ax.set_title("Comparaison des temps moyens par tâche", fontsize=13, fontweight="bold")
     ax.legend(title="Lancement", bbox_to_anchor=(1.05, 1), loc="upper left")
     ax.grid(axis="x", alpha=0.3)
 
     plt.tight_layout()
     plt.savefig("task_comparison.png", dpi=100, bbox_inches="tight")
-    print(f"\n📈 Graphique sauvegardé : task_comparison.png")
+    print("\n📈 Graphique sauvegardé : task_comparison.png")
 
 
 def generate_detailed_csv_export(task_stats_list: List[pd.DataFrame]) -> None:
@@ -255,9 +242,7 @@ def main():
         print("\nUsage:")
         print("  python3 compare_benchmarks.py <file1.csv> <file2.csv> [file3.csv] ...")
         print("\nExemple:")
-        print(
-            "  python3 compare_benchmarks.py results/run1/stats.csv results/run2/stats.csv"
-        )
+        print("  python3 compare_benchmarks.py results/run1/stats.csv results/run2/stats.csv")
         sys.exit(1)
 
     # Charger les fichiers

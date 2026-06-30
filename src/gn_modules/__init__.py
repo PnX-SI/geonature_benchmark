@@ -1,3 +1,3 @@
-import src.gn_modules.monitorings
+import src.gn_modules.monitorings as monitorings
 
-_all_ = ["monitorings"]
+__all__ = ["monitorings"]

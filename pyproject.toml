@@ -15,3 +15,19 @@ dependencies = [
     "dash-bootstrap-components",
     "plotly",
 ]
+
+[dependency-groups]
+dev = ["ruff>=0.15.20"]
+
+[tool.ruff]
+# Set the maximum line length to 100.
+line-length = 100
+
+[tool.black]
+line-length = 100
+
+[tool.ruff.lint]
+# Add the `line-too-long` rule to the enforced rule set. By default, Ruff omits rules that
+# overlap with the use of a formatter, like Black, but we can override this behavior by
+# explicitly adding the rule.
+extend-select = ["E501"]
