@@ -1,8 +1,20 @@
 import logging
 
-from src.fixture import *
-from src.constants import TASK_NAMES, SYNTHESE_EXPORT_STATUS_URL, SYNTHESE_EXPORT_TAXON_URL, SYNTHESE_OBS_URL, \
-    SYNTHESE_EXPORT_URL
+from src.fixture import (
+    BBOX_POLYGON,
+    COMPLEX_POLYGON,
+    TREE_TAXON_FILTER,
+    REGULATION_FILTER,
+    N_ITEM_SYNTHESE,
+    REG,
+)
+from src.constants import (
+    TASK_NAMES,
+    SYNTHESE_EXPORT_STATUS_URL,
+    SYNTHESE_EXPORT_TAXON_URL,
+    SYNTHESE_OBS_URL,
+    SYNTHESE_EXPORT_URL,
+)
 
 from locust import tag, task
 
@@ -17,6 +29,7 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
     Classe consolidée contenant toutes les tâches de benchmark geonature
     Les tâches sont organisées par groupe avec des tags pour distinction.
     """
+
     VERSION = "2.15.4"
 
     # -- Home — Statistiques générales --
@@ -46,9 +59,7 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
     @tag("synthese", "nomenclature")
     @task
     def test_get_default_nomenclatures(self):
-        self.get(
-            "/synthese/defaultsNomenclatures", name=TASK_NAMES["default_nomenclatures"]
-        )
+        self.get("/synthese/defaultsNomenclatures", name=TASK_NAMES["default_nomenclatures"])
 
     # -- Synthèse — Filtres géométriques --
 
@@ -115,16 +126,12 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
     @tag("synthese", "taxon")
     @task
     def test_with_up_tree_taxon(self):
-        self.post(
-            SYNTHESE_OBS_URL, json=TREE_TAXON_FILTER, name=TASK_NAMES["obs_tree_taxon"]
-        )
+        self.post(SYNTHESE_OBS_URL, json=TREE_TAXON_FILTER, name=TASK_NAMES["obs_tree_taxon"])
 
     @tag("synthese", "regulation")
     @task
     def test_synthese_regulation(self):
-        self.post(
-            SYNTHESE_OBS_URL, json=REGULATION_FILTER, name=TASK_NAMES["obs_regulation"]
-        )
+        self.post(SYNTHESE_OBS_URL, json=REGULATION_FILTER, name=TASK_NAMES["obs_regulation"])
 
     # -- Synthèse — Exports par volume --
 
@@ -133,8 +140,7 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
     def test_export_observations_1000(self):
         # export_observations?export_format=csv&view_name=gn_synthese.v_synthese_for_export
         self.post(
-            SYNTHESE_EXPORT_URL
-            + "?export_format=csv&view_name=gn_synthese.v_synthese_for_export",
+            SYNTHESE_EXPORT_URL + "?export_format=csv&view_name=gn_synthese.v_synthese_for_export",
             json=self.ids_synthese[:1000],
             name=TASK_NAMES["export_csv_1000"],
         )
@@ -176,7 +182,6 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
         )
 
     # -- Validation --
-    
 
     @tag("validation")
     @task
@@ -190,5 +195,3 @@ class GeoNatureBenchmarkBase(GeoNatureUser):
             "/validation?page=1&per_page=10&sort=desc&order_by=last_validation.validation_date&format=json",
             name=TASK_NAMES["validation_last"],
         )
-
-        

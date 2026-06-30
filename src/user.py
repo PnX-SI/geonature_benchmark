@@ -12,6 +12,7 @@ from packaging.version import Version
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @total_ordering
 class VersionMeta(UserMeta):
     """
@@ -19,6 +20,7 @@ class VersionMeta(UserMeta):
     Avec ça on peut faire `Geonature217 > Geonature216` par exemple.
     On peut aussi faire `Geonature217 >= "2.16.0"`.
     """
+
     VERSION = "0.0.0"
 
     def __eq__(cls, other):
@@ -45,6 +47,7 @@ class GeoNatureUser(HttpUser, metaclass=VersionMeta):
     Classe de base partagée par tous les groupes de tests.
     Gère l'authentification et injecte le token Bearer dans chaque requête.
     """
+
     VERSION = "0.0.0"
     abstract = True
     wait_time = between(1, 3)
@@ -52,7 +55,6 @@ class GeoNatureUser(HttpUser, metaclass=VersionMeta):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.client.verify = config.config.verify_ssl
-
 
     def connect(self):
         """Récupère le token JWT au démarrage de chaque utilisateur simulé."""
@@ -70,7 +72,6 @@ class GeoNatureUser(HttpUser, metaclass=VersionMeta):
             else:
                 resp.failure(f"Échec auth ({resp.status_code})")
 
-
     def on_start(self):
         """
         We do those call on start so we don't neeed to do them multiple times across our benchmarks
@@ -82,7 +83,6 @@ class GeoNatureUser(HttpUser, metaclass=VersionMeta):
         self.id_area_reg = self.fetch_one_area("REG", REG) if REG else None
         return super().on_start()
 
-
     def fetch_ids_synthese(self, n):
         """
         helper called from tests; use plain requests so that
@@ -91,18 +91,13 @@ class GeoNatureUser(HttpUser, metaclass=VersionMeta):
         url = self.host.rstrip("/") + SYNTHESE_OBS_URL + f"?limit={n}"
         resp = self.get(url, catch_response=True)
         resp.raise_for_status()
-        return [
-            feature.get("id_synthese") for feature in resp.json().get("features", [])
-        ]
+        return [feature.get("id_synthese") for feature in resp.json().get("features", [])]
 
     def fetch_one_area(self, type_area="COM", area_name=None):
-        url = (
-            self.host.rstrip("/")
-            + f"/geo/areas?without_geom=true&type_code={type_area}"
-        )
+        url = self.host.rstrip("/") + f"/geo/areas?without_geom=true&type_code={type_area}"
         if area_name:
             url += f"&area_name={area_name}"
-        resp = self.get(url,catch_response=True)
+        resp = self.get(url, catch_response=True)
         resp.raise_for_status()
         areas = resp.json()
         return areas[0].get("id_area") if areas else None
@@ -114,7 +109,4 @@ class GeoNatureUser(HttpUser, metaclass=VersionMeta):
         return self.client.get(url, headers=self._headers(), name=name or url, **kwargs)
 
     def post(self, url, name=None, **kwargs):
-        return self.client.post(
-            url, headers=self._headers(), name=name or url, **kwargs
-        )
-
+        return self.client.post(url, headers=self._headers(), name=name or url, **kwargs)

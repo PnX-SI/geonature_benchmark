@@ -27,9 +27,7 @@ class UserFactory:
         else:
             raise ValueError("Aucun utilisateur fourni")
 
-    def _load(
-        self, kdbx_path: str, master_password: str, group_name: str
-    ) -> List[User]:
+    def _load(self, kdbx_path: str, master_password: str, group_name: str) -> List[User]:
         """
         Charge les utilisateurs depuis un fichier KeePass.
 

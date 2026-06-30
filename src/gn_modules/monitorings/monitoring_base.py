@@ -1,4 +1,4 @@
-from locust import tag, task
+from locust import task
 
 from src.constants import TASK_NAMES
 from src.user import GeoNatureUser

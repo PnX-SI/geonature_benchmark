@@ -1,10 +1,9 @@
 import logging
 
-from locust import  tag, task
+from locust import tag, task
 
 from src.constants import TASK_NAMES
 from src.geonature.geonature_base import GeoNatureBenchmarkBase
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class GeoNature2170(GeoNatureBenchmarkBase):
     VERSION = "2.17.0"
-    
+
     @tag("validation")
     @task
     def test_get_validated_obs(self):
@@ -29,5 +28,3 @@ class GeoNature2170(GeoNatureBenchmarkBase):
             "/validation?page=1&per_page=10&sort=desc&order_by=validation_date&format=json&no_auto=true",
             name=TASK_NAMES["validation_last"],
         )
-
-    

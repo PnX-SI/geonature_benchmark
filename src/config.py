@@ -74,6 +74,7 @@ def add_arguments(parser, **kwargs):
         help="Désactiver la vérification du certificat SSL",
     )
 
+
 @events.init.add_listener
 def on_locust_init(environment, **kwargs):
     global config, factory
@@ -81,7 +82,7 @@ def on_locust_init(environment, **kwargs):
     config.validate()
 
     if not config.verify_ssl:
-        warnings.filterwarnings('ignore', message='Unverified HTTPS request')
+        warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
     if config.use_kdbx:
         master_password = os.environ.get("KEEPASS_MASTER_PASSWORD") or getpass.getpass(
@@ -93,6 +94,4 @@ def on_locust_init(environment, **kwargs):
             group_name="Users",
         )
     else:
-        factory = UserFactory(
-            list_users=[User(username=config.username, password=config.password)]
-        )
+        factory = UserFactory(list_users=[User(username=config.username, password=config.password)])

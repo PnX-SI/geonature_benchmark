@@ -1,13 +1,16 @@
 from posixpath import basename
 
-from dash import Dash, State, html, dcc, callback, Output, Input
+from dash import Dash, html, dcc, callback, Output, Input
 import plotly.express as px
 import pandas as pd
 
 import dash_bootstrap_components as dbc
 
-default_columns = "Run,Type,Name,Request Count,Failure Count,Median Response Time,Average Response Time,Min Response Time,Max Response Time,Average Content Size,Requests/s,Failures/s,50%,66%,75%,80%,90%,95%,98%,99%,99.9%,99.99%,100%".split(
-    ","
+default_columns = (
+    "Run,Type,Name,Request Count,Failure Count,Median Response Time,"
+    "Average Response Time,Min Response Time,Max Response Time,"
+    "Average Content Size,Requests/s,Failures/s,50%,66%,75%,80%"
+    ",90%,95%,98%,99%,99.9%,99.99%,100%".split(",")
 )
 benchmark_df1 = pd.DataFrame([], columns=default_columns)
 benchmark_df2 = pd.DataFrame([], columns=default_columns)
@@ -16,9 +19,7 @@ benchmark_df2 = pd.DataFrame([], columns=default_columns)
 def gen_plot(df, df2):
     df_fin = pd.concat([df, df2], ignore_index=True)
     df_fin["Name"] = df_fin["Name"].str.split("|").str[-1]
-    return px.bar(
-        df_fin, x="Name", y="Median Response Time", barmode="group", color="Run"
-    )
+    return px.bar(df_fin, x="Name", y="Median Response Time", barmode="group", color="Run")
 
 
 def upload_form(id_div):
