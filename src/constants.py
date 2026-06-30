@@ -18,4 +18,14 @@ TASK_NAMES = {
     "geo_areas_without_geom": "geo/areas?geom=false | Ref Geo · Aires sans géométrie",
     "validation_obs": "validation/observations?limit=1000 | Validation · 1 000 obs à valider",
     "validation_last": "validation?sort=validation_date:desc | Validation · Dernières validations",
+    "monitorings_modules": "monitorings/modules | Monitorings · Liste des modules",
 }
+
+# ---------------------------------------------------------------------------
+# Synthèse
+# ---------------------------------------------------------------------------
+
+SYNTHESE_OBS_URL = "/synthese/for_web"
+SYNTHESE_EXPORT_URL = "/synthese/export_observations"
+SYNTHESE_EXPORT_STATUS_URL = "/synthese/export_statuts"
+SYNTHESE_EXPORT_TAXON_URL = "/synthese/export_taxons"
