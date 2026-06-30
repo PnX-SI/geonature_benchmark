@@ -6,7 +6,18 @@ from locust import events
 from src import geonature, gn_modules
 from logging import getLogger
 
+from typing import Protocol, Set, List, cast, Sequence
+
 logger = getLogger(__name__)
+
+
+class TaskFunction(Protocol):
+    """Type pour les fonctions tasks avec attributs Locust et personnalisés."""
+
+    locust_task_weight: int
+    locust_tag_set: Set[str]
+
+    def __call__(self, *args, **kwargs) -> None: ...
 
 
 class GeoNatureBenchmarkTasks(GeoNatureUser):
@@ -42,7 +53,11 @@ class GeoNatureBenchmarkTasks(GeoNatureUser):
                 URL of the module to be passed to tasks
         """
         methods = inspect.getmembers(locust_class, predicate=inspect.isfunction)
-        tasks = [method for _, method in methods if hasattr(method, "locust_task_weight")]
+        tasks: Sequence[TaskFunction] = [
+            cast(TaskFunction, method)
+            for _, method in methods
+            if hasattr(method, "locust_task_weight")
+        ]
         if additional_tag:
             for task in tasks:
                 if not hasattr(task, "locust_tag_set"):
@@ -53,7 +68,9 @@ class GeoNatureBenchmarkTasks(GeoNatureUser):
         logger.debug(f"Added following tasks to benchmark {tasks}")
 
     @classmethod
-    def parametrize_tasks(cls, tasks, module_url):
+    def parametrize_tasks(
+        cls, tasks: Sequence[TaskFunction], module_url: str
+    ) -> Sequence[TaskFunction]:
         """
         This method is used to parametrize tasks with the module_url argument.
 
@@ -64,13 +81,13 @@ class GeoNatureBenchmarkTasks(GeoNatureUser):
         For how the principe works, see `functools.partial` documentation or
         search the concept of currying.
         """
-        new_tasks = []
+        new_tasks: List[TaskFunction] = []
         for task in tasks:
             if hasattr(task, "module_url"):
                 new_task = partial(task, module_url=module_url)
-                new_task.locust_task_weight = getattr(task, "locust_task_weight")
-                new_task.locust_tag_set = getattr(task, "locust_tag_set")
-                new_tasks.append(new_task)
+                setattr(new_task, "locust_task_weight", getattr(task, "locust_task_weight"))
+                setattr(new_task, "locust_tag_set", getattr(task, "locust_tag_set"))
+                new_tasks.append(cast(TaskFunction, new_task))
             else:
                 new_tasks.append(task)
         return new_tasks

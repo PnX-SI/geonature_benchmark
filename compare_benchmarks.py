@@ -52,9 +52,9 @@ def extract_task_stats(df: pd.DataFrame, run_name: str) -> pd.DataFrame:
     # Filtrer pour exclure les lignes de résumé
     # (Type vide, ou Name contenant 'Total' ou 'Aggregated')
     df_tasks = df[
-        (df.get("Type", "").fillna("").str.strip() != "")
-        & (df.get("Name", "").fillna("").str.strip() != "")
-        & (~df.get("Name", "").str.contains("Total|Aggregated", case=False, na=False))
+        (df["Type"].fillna("").str.strip() != "")
+        & (df["Name"].fillna("").str.strip() != "")
+        & (~df["Name"].fillna("").str.contains("Total|Aggregated", case=False, na=False))
     ].copy()
 
     # Nettoyage des valeurs texte

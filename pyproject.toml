@@ -3,7 +3,7 @@ name = "geonature-benchmark"
 version = "0.1.0"
 description = "Performance benchmarking tools for GeoNature instances"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "locust",
     "pandas",
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.15.20"]
+dev = ["ruff>=0.15.20", "mypy==2.1.0", "pandas-stubs", "pykeepass-stubs", "plotly-stubs"]
 
 [tool.ruff]
 # Set the maximum line length to 100.

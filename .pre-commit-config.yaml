@@ -11,14 +11,15 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.1.0
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies:
-          - types-PyYAML~=6.0.12
-          - types-requests~=2.33.0
-          - typing-extensions~=4.15.0
+        name: mypy
+        entry: uv run mypy .
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true
 
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v4.0.0
